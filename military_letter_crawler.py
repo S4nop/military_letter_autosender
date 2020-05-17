@@ -1,145 +1,97 @@
 import requests
 import os.path
 import json
+import sys
+import builtins
 from bs4 import BeautifulSoup
 from bs4 import Comment
 from enum import Enum
 import re
-
-# --Class PageFeed : Get facebook page/group's writing--
+from datetime import datetime
 '''
-Usage
-fbc = FacebookCrawler()
-fbc.set_user("username")
-
-fbc.addPagetoList or GroupList
-fbc.auto~~.
-or
-fbc.pageFeed(...)
 '''
-class FacebookCrawler:
-    userName = ""
-    targList = dict()
 
-    def set_user(self, uname):
-        self.userName = uname
-        filePath = 'user_' + uname + '.dat'
+class UserFileManager:
+    username = ""
+    userdata = []
+
+    def __init__(self, username):
+        self.username = username
+
+    #Usage : addFunction(function name, parameters, class name)
+    def addFunction(self, featName, params, className="builtins"):
+        self.userdata.append([className, featName, params])
+        print(self.userdata)
+
+    def addCrawler(self, crawler_name, kwargs):
+        self.userdata.append(["?Crawler", crawler_name, kwargs])
+        pass
+
+    def getData(self):
+        return self.userdata
+
+    def writeFile(self):
+        text = ""
+        for data in self.userdata:
+            text = text + data[0] + "*::*" + data[1] + "*::*" + data[2] + "@##@"
+        text = text.rstrip("@##@")
+
+        with open('user_' + self.username + '.dat', mode='wt', encoding='utf-8') as w:
+            w.write(text)
+
+    def readFile(self):
+        filePath = 'user_' + self.username + '.dat'
+        self.userdata = []
         if os.path.isfile(filePath):
+            print("[LOG] File exists. Start reading user data file.")
             with open(filePath, encoding='utf-8') as r:
-               self.targList = json.load(r)
-            return
-        self.initDict()
+                datas = r.readlines()[0].split("@##@")
 
-    def initDict(self):
-        self.targList['Page'] = dict()
-        self.targList['Group'] = dict()
+            for data in datas:
+                self.userdata.append(data.split("*::*"))
+            return 0
+        print("[LOG] File not exist. You should create user data file with UserDataFileManager class.")
+        return -1
 
-    def addPagetoList(self, page_Name, count = 5):
-        if page_Name in self.targList['Page']:
-            return
-        self.targList['Page'][page_Name] = dict()
-        self.targList["Page"][page_Name]['tData'] = ""
-        self.targList['Page'][page_Name]['count'] = count
+class AutoBodyMaker:
+    username = ""
+    userdata = []
+    bodyResult = ""
 
-    def addGrouptoList(self, group_Name, count = 5):
-        if group_Name in self.targList['Group']:
-            return
-        self.targList['Group'][group_Name] = dict()
-        self.targList['Group'][group_Name]['tData'] = ""
-        self.targList['Group'][group_Name]['count'] = count
+    def __init__(self, username):
+        self.username = username
 
-    def getTimeData(self, targName, targType): #If page doesn't exist in file, return -1
-        return self.targList[targType][targName]["tData"] if self.targList[targType][targName]['tData'] != "" else -1, self.targList[targType][targName]['count']
-
-    def writeTimeData(self, pageName, targType, timeData):
-        self.targList[targType][pageName]['tData'] = timeData
-
-    def writeUserFile(self, data):
-        with open('user_' + self.userName + '.dat', mode='wt', encoding='utf-8') as w:
-            json.dump(self.targList, w, indent="\t")
-
-    def remDup(self, html, oldTimeID):
-        for child in reversed(html):
-            html.pop()
-            if(child.find('a', {'class':'_5pcq'})['href'] == oldTimeID):
-                break
-
-    def remNotice(self, respSoup):
-        i = 0
-        for child in respSoup:
-            if(child.select('._449j')):
-                i += 1
+    def run(self):
+        self.userdata = self.__readFileData()
+        for data in self.userdata:
+            #Parse arguments for function call
+            if data[0] != "?Crawler":
+                self.bodyResult += self.__runFunctions(data)
             else:
-                break
-        return respSoup[i : int(len(respSoup))]
+                self.bodyResult += self.__runCrawler(data)
 
-    def pageFeed(self, pageName):
-        if self.userName == "":
-            print("Need username")
-            return
-        req = requests.get("https://www.facebook.com/pg/" + pageName + "/posts/?ref=page_internal")
-        soup = BeautifulSoup(req.content, "html.parser")
+        return self.bodyResult
 
-        contents = soup.select('.userContentWrapper')
-        contents_no_notice = [x for x in contents if not x.select('._449j')]
+    def appendLine(self, text):
+        self.bodyResult += "<br>" + text
 
-        timeID, count = self.getTimeData(pageName, 'Page')
+    def __runCrawler(self, data):
+        cls = getattr(sys.modules[__name__], data[1])
+        cls.init()
+        cls.crawl()
+        cls.formatting()
+        return cls.getBody()
 
-        if timeID != -1:
-            self.remDup(contents_no_notice, timeID)
-        contents_reversed = list(reversed(contents_no_notice))
+    def __runFunctions(self, data):
+        args = dict(arg for arg in data[2].split(",")) if data[2].find(",") != -1 else data[2]
+        print("[LOG] " + data[1] + " function successfully called")
+        return getattr(getattr(sys.modules[__name__], data[0]), data[1])(args) + "<br>"
 
-        texts = []
-        for i in range(0, min(count, len(contents_reversed))):
-            timeID = contents_reversed[i].find('a', {'class':'_5pcq'})['href']
-            user_content = contents_reversed[i].find_all(attrs={'data-testid': 'post_message'})
-            text = ' '.join(map(lambda x: x.text, user_content))
-            print(text)
-            texts.append(text)
+    def __readFileData(self):
+        udfm = UserFileManager(self.username)
+        udfm.readFile()
+        return udfm.getData()
 
-        self.writeTimeData(pageName, 'Page', timeID)
-        return '\n'.join(texts)
-
-
-    def groupFeed(self, groupName):
-        if self.userName == "":
-            print("Need username")
-            return
-        req = requests.get("https://www.facebook.com/groups/" + groupName)
-        mainSoup = BeautifulSoup(req.content, 'html.parser')
-
-        commentData = mainSoup.find_all(string=lambda text: isinstance(text, Comment))
-        soup = BeautifulSoup(bytes(commentData[1], 'utf-8'), 'html.parser')
-        contents = soup.select('._3ccb')
-
-        timeID , count= self.getTimeData(groupName, 'Group')
-        if timeID != -1:
-            self.remDup(contents, timeID)
-        contents_reversed = list(reversed(contents))
-
-        texts = []
-        for i in range(0, min(count, len(contents_reversed))):
-            timeID = contents_reversed[i].find('a', {'class':'_5pcq'})['href']
-
-            user_content = contents_reversed[i].find_all(attrs={'data-testid':'post_message'})
-            text = '\n[--Indented Text--]\n'.join(map(lambda x: x.text, user_content))
-            print(text)
-            texts.append(text)
-
-        self.writeTimeData(groupName, 'Group', timeID)
-        return '\n'.join(texts)
-
-    def autoRunFromFile(self):
-        result = []
-        for targ in self.targList['Page']:
-            result.append('[[Page Name: ' + targ + ']]' + str(self.pageFeed(targ)))
-        for targ in self.targList['Group']:
-            result.append('[[Group Name: ' + targ + ']]' + str(self.groupFeed(targ)))
-        self.writeUserFile(self.targList)
-        return '\n'.join(result)
-
-
-#Letter Sending Class
 class LetterClient:
     host = 'https://www.thecamp.or.kr'
 
@@ -203,8 +155,12 @@ class LetterClient:
 
 
         for cont in chkedContent:
+            splitForNL = cont.split("\n")
+            pkg = []
+            for line in splitForNL:
+                pkg.append('<p>' + line + '</p>')
             print("cont-------------" + cont + "\n")
-            self.send(name, title, cont)
+            self.send(name, title, ''.join(pkg))
 
     def send(self, name, title, content):
         cafes = self.get_cafes()
@@ -335,106 +291,29 @@ class LetterClient:
             return ''
         return relation_code_table[relation_name]
 
-#News Crawler Class
-class NewsCrawler:
-    class NaverNews:
-        soup = ""
-        class NewsType(Enum):
-            POLITIC     = 0
-            ECONOMY     = 1
-            SOCIETY     = 2
-            LIFECULTURE = 3
-            WORLD       = 4
-            ITSCIENCE   = 5
+class absCrawler:
+    body = ""
 
-        def getNewsPage(self):
-            newsPage = requests.get("https://news.naver.com/")
-            self.soup = BeautifulSoup(newsPage.content, "html.parser")
+    def init(self):
+        pass
 
-        def getNewsTitles(self, newsType):
-            texts = []
-            for child in self.soup.select("#ranking_10" + str(newsType.value) + " > ul"):
-                texts.append(child.get_text())
-            return '\n'.join(texts)
+    def crawl(self, **kwargs):
+        pass
 
-    class GoogleNews:
-        soup = ""
-        CONST_HEADLINE_URL = "https://news.google.com/?hl=ko&gl=KR&ceid=KR%3Ako"
-        CONST_KOR_URL = "https://news.google.com/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNRFp4WkRNU0FtdHZLQUFQAQ?hl=ko&gl=KR&ceid=KR%3Ako"
-        CONST_WORLD_URL = "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtdHZHZ0pMVWlnQVAB?hl=ko&gl=KR&ceid=KR%3Ako"
-        CONST_BUSINESS_URL = "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtdHZHZ0pMVWlnQVAB?hl=ko&gl=KR&ceid=KR%3Ako"
-        CONST_SCI_TECH_URL = "https://news.google.com/topics/CAAqKAgKIiJDQkFTRXdvSkwyMHZNR1ptZHpWbUVnSnJieG9DUzFJb0FBUAE?hl=ko&gl=KR&ceid=KR%3Ako"
-        CONST_ENTERTAIN_URL = "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtdHZHZ0pMVWlnQVAB?hl=ko&gl=KR&ceid=KR%3Ako"
-        CONST_SPORTS_URL = "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtdHZHZ0pMVWlnQVAB?hl=ko&gl=KR&ceid=KR%3Ako"
-        CONST_HEALTH_URL = "https://news.google.com/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtdHZLQUFQAQ?hl=ko&gl=KR&ceid=KR%3Ako"
+    def formatting(self):
+        pass
 
-        def getNewsTitles(self, newsURL, num):
-            newsPage = requests.get(newsURL)
-            soup = BeautifulSoup(newsPage.content, "html.parser")
-            texts = []
-            for i in range(0, num):
-                texts.append(soup.select(".DY5T1d")[i].get_text())
-            return '\n'.join(texts)
+    def getBody(self):
+        return self.body
 
-    class Corona:
-        def getTodayData(self):
-            soup = BeautifulSoup(requests.get("http://ncov.mohw.go.kr/").content, "html.parser")
-            texts = []
-            for child in soup.select(".liveNum > .liveNum"):
-                texts.append(re.sub('\n\+|\?\n|\n','',child.get_text().strip()))
-            return ' '.join(texts)
 
-#Weather Crawler Class
-class WeatherCrawler:
-
-    def parseWeatherInfo(self, tBodySoup):
-        mTemp = tBodySoup.select(".cell")[0].select(".temp")[0].get_text()
-        aTemp = tBodySoup.select(".cell")[1].select(".temp")[0].get_text()
-
-        if len(tBodySoup.select("th")) == 0:
-            date = "내일"
-            mSplit = tBodySoup.select(".cell")[0].select(".info")[0].get_text().split("강수확률")
-            aSplit = tBodySoup.select(".cell")[1].select(".info")[0].get_text().split('강수확률')
-            morning = mTemp + "℃ - " + mSplit[0] + ' - 강수확률' + mSplit[1]
-            afternoon = aTemp + "℃ - " + aSplit[0] + ' - 강수확률 ' + aSplit[1]
-        else:
-            date = tBodySoup.select("th")[0].get_text()
-            morning = mTemp + "℃ - " + tBodySoup.select(".cell")[0].select(".info")[0].get_text()
-            afternoon = aTemp + "℃ - " + tBodySoup.select(".cell")[1].select(".info")[0].get_text()
-
-        return '(' + date + ', ' + morning + ', ' + afternoon + ')'
-
-    def getWeather(self):
-        req = requests.get("https://weather.naver.com/rgn/townWetr.nhn?naverRgnCd=15230253")
-        soup = BeautifulSoup(req.content, 'html.parser')
-        respSoup = soup.select("table")
-
-        result = []
-        result.append(self.parseWeatherInfo(respSoup[1].select("td")[1]))
-        for child in respSoup[2].select("tr"):
-            result.append(self.parseWeatherInfo(child))
-
-        return '\n'.join(result)
 
 if __name__ == "__main__":
+    usfm = UserFileManager("sanop")
+    usfm.addFunction("print", "프린트")
+    usfm.addFunction("getWeather", "", "WeatherCrawler")
+    usfm.writeFile()
 
-    fbc = FacebookCrawler()
-    fbc.set_user('ryu')
-    fbcResult = fbc.autoRunFromFile()
-    print(fbcResult)
-    wtc = WeatherCrawler()
-    wtcResult = wtc.getWeather()
+    ar = AutoBodyMaker("sanop")
+    print(ar.run())
 
-    newsList = []
-    nc = NewsCrawler.NaverNews()
-    nc.getNewsPage()
-    newsList.append(nc.getNewsTitles(nc.NewsType.LIFECULTURE))
-    newsList.append(nc.getNewsTitles(nc.NewsType.WORLD))
-
-    cc = NewsCrawler.Corona()
-    newsList.append(cc.getTodayData())
-
-    lc = LetterClient()
-    #print('\n'.join(newsList))
-    lc.login("rshtiger@naver.com", "")
-    lc.send_letter("김재이", ".", fbcResult)
