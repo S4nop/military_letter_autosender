@@ -1,8 +1,5 @@
 import requests
-import os.path
 import json
-import sys
-import builtins
 from bs4 import BeautifulSoup
 from bs4 import Comment
 from enum import Enum
@@ -10,87 +7,6 @@ import re
 from datetime import datetime
 '''
 '''
-
-class UserFileManager:
-    username = ""
-    userdata = []
-
-    def __init__(self, username):
-        self.username = username
-
-    #Usage : addFunction(function name, parameters, class name)
-    def addFunction(self, featName, params, className="builtins"):
-        self.userdata.append([className, featName, params])
-        print(self.userdata)
-
-    def addCrawler(self, crawler_name, kwargs):
-        self.userdata.append(["?Crawler", crawler_name, kwargs])
-        pass
-
-    def getData(self):
-        return self.userdata
-
-    def writeFile(self):
-        text = ""
-        for data in self.userdata:
-            text = text + data[0] + "*::*" + data[1] + "*::*" + data[2] + "@##@"
-        text = text.rstrip("@##@")
-
-        with open('user_' + self.username + '.dat', mode='wt', encoding='utf-8') as w:
-            w.write(text)
-
-    def readFile(self):
-        filePath = 'user_' + self.username + '.dat'
-        self.userdata = []
-        if os.path.isfile(filePath):
-            print("[LOG] File exists. Start reading user data file.")
-            with open(filePath, encoding='utf-8') as r:
-                datas = r.readlines()[0].split("@##@")
-
-            for data in datas:
-                self.userdata.append(data.split("*::*"))
-            return 0
-        print("[LOG] File not exist. You should create user data file with UserDataFileManager class.")
-        return -1
-
-class AutoBodyMaker:
-    username = ""
-    userdata = []
-    bodyResult = ""
-
-    def __init__(self, username):
-        self.username = username
-
-    def run(self):
-        self.userdata = self.__readFileData()
-        for data in self.userdata:
-            #Parse arguments for function call
-            if data[0] != "?Crawler":
-                self.bodyResult += self.__runFunctions(data)
-            else:
-                self.bodyResult += self.__runCrawler(data)
-
-        return self.bodyResult
-
-    def appendLine(self, text):
-        self.bodyResult += "<br>" + text
-
-    def __runCrawler(self, data):
-        cls = getattr(sys.modules[__name__], data[1])
-        cls.init()
-        cls.crawl()
-        cls.formatting()
-        return cls.getBody()
-
-    def __runFunctions(self, data):
-        args = dict(arg for arg in data[2].split(",")) if data[2].find(",") != -1 else data[2]
-        print("[LOG] " + data[1] + " function successfully called")
-        return getattr(getattr(sys.modules[__name__], data[0]), data[1])(args) + "<br>"
-
-    def __readFileData(self):
-        udfm = UserFileManager(self.username)
-        udfm.readFile()
-        return udfm.getData()
 
 class LetterClient:
     host = 'https://www.thecamp.or.kr'
@@ -291,29 +207,5 @@ class LetterClient:
             return ''
         return relation_code_table[relation_name]
 
-class absCrawler:
-    body = ""
 
-    def init(self):
-        pass
-
-    def crawl(self, **kwargs):
-        pass
-
-    def formatting(self):
-        pass
-
-    def getBody(self):
-        return self.body
-
-
-
-if __name__ == "__main__":
-    usfm = UserFileManager("sanop")
-    usfm.addFunction("print", "프린트")
-    usfm.addFunction("getWeather", "", "WeatherCrawler")
-    usfm.writeFile()
-
-    ar = AutoBodyMaker("sanop")
-    print(ar.run())
 
