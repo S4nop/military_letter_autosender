@@ -3,7 +3,7 @@ import os.path
 import sys
 import builtins
 import military_letter_sender
-
+import functions_area
 
 class UserFileManager:
     username = ""
@@ -73,18 +73,11 @@ class AutoBodyMaker:
     def appendLine(self, text):
         self.bodyResult += "<br>" + text
 
-    def __runCrawler(self, data):
-        cls = getattr(sys.modules[__name__], data[1])
-        cls.init()
-        cls.crawl()
-        cls.formatting()
-        return cls.getBody()
-
     def __runFunctions(self, data):
         args = self.__makeArgs(data[2]) if data[2] != "" else ""
         print("[LOG] : " + data[0] +"::"+ data[1] + " function successfully called")
         if data[0] != "builtins":
-            cls = getattr(sys.modules[__name__], data[0])()
+            cls = getattr(functions_area, data[0])()
             return getattr(cls, data[1])() if args == "" else getattr(cls, data[1])(args)
 
         return getattr(getattr(sys.modules[__name__], data[0]), data[1])(args) + "<br>"
@@ -110,7 +103,7 @@ class AutoBodyMaker:
             return attrstr
 
         attrs = attrstr.split(".") if attrstr.find(".") != -1 else attrstr
-        cls = sys.modules[__name__]
+        cls = functions_area
         for attr in attrs:
             cls = getattr(cls, attr)
         return cls
