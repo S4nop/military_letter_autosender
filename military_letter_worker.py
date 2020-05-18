@@ -88,19 +88,21 @@ class AutoBodyMaker:
         return udfm.getData()
 
     def __makeArgs(self, argstr):
-        args = dict(arg for arg in argstr[2].split(",")) if argstr[2].find(",") != -1 else argstr
+        args = argstr.split(",") if argstr.find(",") != -1 else argstr
         if type(args) == str:
-            return self.__getNestedAttr(args)
+            return self.__getNestedAttr(args.strip())
         else:
             nargs = []
             for arg in args:
-                nargs.append(self.__getNestedAttr(arg))
+                nargs.append(self.__getNestedAttr(arg.strip()))
             return nargs
 
 
     def __getNestedAttr(self, attrstr):
-        if attrstr[0] == "?":
+        if attrstr.startswith('?Text_'):
             return attrstr
+        elif attrstr.startswith('?Num_'):
+            return int(attrstr.split('?Num_')[1])
 
         attrs = attrstr.split(".") if attrstr.find(".") != -1 else attrstr
         cls = functions_area

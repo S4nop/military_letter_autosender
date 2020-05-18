@@ -1,8 +1,11 @@
-# Military Letter & Crawler
+# Military Letter AutoSender
 
 ## Introduction
 
-훈련소에서 인터넷편지를 통해 외부 소식을 전해 들을 수 있도록 웹페이지에서 내용을 크롤해 와서 편지로 보내는 라이브러리입니다. 
+훈련소에 있는 사람에게 자동으로 인편을 보내주는 라이브러리입니다.
+
+[Military Letter Crawler](https://github.com/nuxlear/military-letter-crawler "JunWon Hwang, WonMo Kang, SungHee Ryu") 프로젝트에서 시작되었으며
+이 레포지토리의 프로젝트는 [Sanop(SungHee Ryu)](https://github.com/S4nop)가 개인적으로 진행중입니다.
 
 ## Requirements
 Python 3.7 에서 작성된 코드입니다. 정상 동작을 위해 Python 3 버전 이상을 사용해주세요. 
@@ -12,18 +15,42 @@ Python 3.7 에서 작성된 코드입니다. 정상 동작을 위해 Python 3 �
 requests
 beautifulsoup4
 Comment
+os.path
+sys
+json
 ```
 
-## Usage
+## Worker Usage
 ```python
-import military_letter_crawler as mlc
+import military_letter_worker as mlw
 
-client = mlc.LetterClient()
-client.login('username@email.com', 'password')
+#유저 파일 생성(1회만 필요)
+ufm = mlw.UserFileManager('username')
+ufm.addText("텍스트")
+ufm.addFunctions("FunctionName", "params", "className")
+
+#인편 전송(유저 파일 필요)
+abm = mlw.AutoBodyMaker('username')
+abm.sendLetter('username@email.com', 'password', 'addressee', 'letter_title')
 ```
+* **addFunction**에 사용될 함수는 **function_area.py**에 작성되어야 합니다.
 
-## Contribution
+## Basically implemented functions
+1. Naver news crawler
+   ```python
+   #Default Usage
+   nn = NaverNews()
+   nn.autoRun(NaverNews.NewsType.WORLD)
 
-- [Junwon Hwang](https://github.com/nuxlear)
-- [Wonmo Kang](https://github.com/DropFL)
-- [Sunghee Ryu](https://github.com/S4nop)
+   #UserFileManager Usage
+   ufm.addFunctions("autoRun", "NaverNews.NewsType.WORLD", "NaverNews")
+   ```
+3. Weather info crawler
+   ```python
+   #Default Usage
+   wc = WeatherCrawler()
+   wc.getWeather()
+
+   #UserFileManager Usage
+   ufm.addFunctions("getWeather", "", "WeatherCrawler")
+   ```

@@ -1,4 +1,7 @@
-import military_letter_worker
+import military_letter_worker as mlw
+import functions_area
 
-worker = military_letter_worker.AutoBodyMaker("sanop")
+
+worker = mlw.AutoBodyMaker("sanop")
 print(worker.makeBody())
+#worker.sendLetter("rshtiger@naver.com", "qwer123$", "김명수", "0518소식")

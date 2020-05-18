@@ -6,7 +6,6 @@ from bs4 import Comment
 from enum import Enum
 import re
 
-# --Class PageFeed : Get facebook page/group's writing--
 '''
 Usage
 fbc = FacebookCrawler()
@@ -18,21 +17,6 @@ or
 fbc.pageFeed(...)
 '''
 
-
-class AbsCrawler:
-    body = ""
-
-    def init(self):
-        pass
-
-    def crawl(self, **kwargs):
-        pass
-
-    def formatting(self):
-        pass
-
-    def getBody(self):
-        return self.body
 
 '''
 class FacebookCrawler:
@@ -128,7 +112,7 @@ class FacebookCrawler:
 
 
 
-class NaverNews(AbsCrawler):
+class NaverNews():
     soup = ""
     class NewsType(Enum):
         POLITIC     = 0
@@ -151,7 +135,7 @@ class NaverNews(AbsCrawler):
     def autoRun(self, newsType):
         self.getNewsPage()
         return self.getNewsTitles(newsType)
-
+'''
 class GoogleNews:
     soup = ""
     CONST_HEADLINE_URL = "https://news.google.com/?hl=ko&gl=KR&ceid=KR%3Ako"
@@ -163,14 +147,15 @@ class GoogleNews:
     CONST_SPORTS_URL = "https://news.google.com/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtdHZHZ0pMVWlnQVAB?hl=ko&gl=KR&ceid=KR%3Ako"
     CONST_HEALTH_URL = "https://news.google.com/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNR3QwTlRFU0FtdHZLQUFQAQ?hl=ko&gl=KR&ceid=KR%3Ako"
 
-    def getNewsTitles(self, newsURL, num):
-        newsPage = requests.get(newsURL)
+    #param1 : newsURL, param2 : num
+    def getNewsTitles(self, *args):
+        newsPage = requests.get(args[0])
         soup = BeautifulSoup(newsPage.content, "html.parser")
         texts = []
-        for i in range(0, num):
+        for i in range(0, args[1]):
             texts.append(soup.select(".DY5T1d")[i].get_text())
         return '\n'.join(texts)
-
+'''
 #Weather Crawler Class
 class WeatherCrawler:
 
