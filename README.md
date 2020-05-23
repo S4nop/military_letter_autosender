@@ -4,7 +4,7 @@
 
 훈련소에 있는 사람에게 자동으로 인편을 보내주는 라이브러리입니다.
 
-[Military Letter Crawler](https://github.com/nuxlear/military-letter-crawler "JunWon Hwang, WonMo Kang, SungHee Ryu") 프로젝트에서 시작되었으며
+[Military Letter Crawler](https://github.com/nuxlear/military-letter-crawler "JunWon Hwang, WonMo Kang, SungHee Ryu") 프로젝트에서 시작되었으며   
 이 레포지토리의 프로젝트는 [Sanop(SungHee Ryu)](https://github.com/S4nop)가 개인적으로 진행중입니다.
 
 ## Requirements
