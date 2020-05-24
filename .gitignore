@@ -6,3 +6,4 @@
 
 *.dat
 worker.py
+.__pycache__/
