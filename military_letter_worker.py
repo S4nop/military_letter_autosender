@@ -8,9 +8,10 @@ import time
 
 class Sender:
     sender = mls.LetterClient()
-    def login_and_send(self, id, pw, name, title_body):
+    def login_and_send(self, id, pw, name, autolettermaker):
+        let = autolettermaker.makeLetter()
         self.sender.login(id, pw)
-        self.sender.send(name, title_body[0], title_body[1])
+        self.sender.send(name, let[0], let[1])
 
 class Scheduler:
     autolettermaker: object
@@ -28,11 +29,12 @@ class Scheduler:
 
     def setScheduler(self, sendOnWeekends):
         self.scheduler.every().monday.tuesday.wednesday.thursday.friday.at("17:00").do(
-            self.sender.login_and_send(self.id, self.pw, self.name, self.autolettermaker.makeLetter())
+            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
         )
         if sendOnWeekends:
-            self.scheduler.every().saturday.sunday.at("17:00").do(
-                self.sender.login_and_send(self.id, self.pw, self.name, self.autolettermaker.makeLetter())
+            print("[LOG] : Scheduler will send letter even weekends")
+            self.scheduler.every().saturday.sunday.at("14:30").do(
+                self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
             )
 
     def run(self):
