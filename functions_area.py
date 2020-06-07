@@ -188,4 +188,11 @@ class WeatherCrawler:
 
         return '<br>'.join(result)
 
+def getwFootballNews(self):
+    newsPage = requests.get("https://sports.news.naver.com/wfootball/index.nhn")
+    self.soup = BeautifulSoup(newsPage.content, "html.parser")
+    texts = []
+    for child in self.soup.select(".news_list > li > a"):
+        texts.append(child.get_text())
+    return '\n'.join(texts)
 

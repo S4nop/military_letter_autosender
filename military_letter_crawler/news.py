@@ -50,13 +50,18 @@ class NewsCrawler:
                 texts.append(re.sub('\n\+|\?\n|\n','',child.get_text().strip()))
             return ' '.join(texts)
 
+    class WfootBall:
+        soup = ""
+        def getNewsTitles(self):
+            newsPage = requests.get("https://sports.news.naver.com/wfootball/index.nhn")
+            self.soup = BeautifulSoup(newsPage.content, "html.parser")
+            texts = []
+            for child in self.soup.select(".news_list > li > a"):
+                texts.append(child.get_text())
+            return '\n'.join(texts)
+
+
 #Main 4 test
 if __name__ == "__main__":
-    naverNews = NewsCrawler.NaverNews()
-    naverNews.getNewsPage()
-    for i in naverNews.NewsType:
-        naverNews.getNewsTitles(i)
-    #gNews = GoogleNews()
-    #gNews.getNewsTitles(GoogleNews.CONST_HEADLINE_URL, 5)
-    cor = NewsCrawler.Corona()
-    cor.getTodayData()
+    wfb = NewsCrawler.WfootBall()
+    print(wfb.getNewsTitles())
