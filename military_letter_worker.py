@@ -28,12 +28,27 @@ class Scheduler:
         self.name = name
 
     def setScheduler(self, sendOnWeekends):
-        self.scheduler.every().monday.tuesday.wednesday.thursday.friday.at("17:00").do(
+        self.scheduler.every().monday.at("17:00").do(
+            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+        )
+        self.scheduler.every().tuesday.at("17:00").do(
+            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+        )
+        self.scheduler.every().wednesday.at("17:00").do(
+            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+        )
+        self.scheduler.every().thursday.at("17:00").do(
+            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+        )
+        self.scheduler.every().friday.at("17:00").do(
             self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
         )
         if sendOnWeekends:
             print("[LOG] : Scheduler will send letter even weekends")
-            self.scheduler.every().saturday.sunday.at("14:30").do(
+            self.scheduler.every().saturday.at("17:00").do(
+                self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+            )
+            self.scheduler.every().sunday.at("17:00").do(
                 self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
             )
 
@@ -101,6 +116,7 @@ class AutoLetterMaker:
 
     def makeBody(self):
         self.userdata = self.__readFileData()
+        self.bodyResult = ""
         for data in self.userdata:
             #Parse arguments for function call
             if data[0] != "?Text":
