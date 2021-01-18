@@ -28,19 +28,19 @@ class Scheduler:
         self.name = name
 
     def setScheduler(self, sendOnWeekends):
-        self.scheduler.every().monday.at("17:00").do(
+        self.scheduler.every().monday.at("13:00").do(
             self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
         )
-        self.scheduler.every().tuesday.at("17:00").do(
+        self.scheduler.every().tuesday.at("15:16").do(
             self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
         )
-        self.scheduler.every().wednesday.at("17:00").do(
+        self.scheduler.every().wednesday.at("13:00").do(
             self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
         )
-        self.scheduler.every().thursday.at("17:00").do(
+        self.scheduler.every().thursday.at("13:00").do(
             self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
         )
-        self.scheduler.every().friday.at("17:00").do(
+        self.scheduler.every().friday.at("13:00").do(
             self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
         )
         if sendOnWeekends:
