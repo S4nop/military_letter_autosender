@@ -123,14 +123,20 @@ class NaverNews():
         ITSCIENCE   = 5
 
     def getNewsPage(self):
-        newsPage = requests.get("https://news.naver.com/")
+        headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Whale/2.8.108.15 Safari/537.36'}
+        newsPage = requests.get("https://news.naver.com", headers=headers)
         self.soup = BeautifulSoup(newsPage.content, "html.parser")
 
     def getNewsTitles(self, newsType):
         texts = []
-        for child in self.soup.select("#ranking_10" + str(newsType.value) + " > ul"):
+        news_part = self.soup.select(".com_list")[newsType.value]
+        texts.append(news_part.select(".com_list > dl > dd > a")[0].get_text())
+        for child in news_part.select(".com_list > div > ul > li > a > strong"):
             texts.append(child.get_text())
-        return ''.join(texts).replace("\n", "<br>")
+
+        print('\\')
+        tmp =  '<br>'.join(texts).replace("\\", "")
+        return tmp
 
     def autoRun(self, newsType):
         self.getNewsPage()
@@ -160,32 +166,37 @@ class GoogleNews:
 class WeatherCrawler:
 
     def parseWeatherInfo(self, tBodySoup):
-        mTemp = tBodySoup.select(".cell")[0].select(".temp")[0].get_text()
-        aTemp = tBodySoup.select(".cell")[1].select(".temp")[0].get_text()
+        date = tBodySoup.select(".date")[0].get_text().replace('\n', '')
+        morning = tBodySoup.select(".weather_inner")[0].get_text().replace('\n', '')
+        afternoon = tBodySoup.select(".weather_inner")[1].get_text().replace('\n', '')
+        temperature = tBodySoup.select(".cell_temperature")[0].get_text().replace('\n', '')
 
-        if len(tBodySoup.select("th")) == 0:
-            date = "내일"
-            mSplit = tBodySoup.select(".cell")[0].select(".info")[0].get_text().split("강수확률")
-            aSplit = tBodySoup.select(".cell")[1].select(".info")[0].get_text().split('강수확률')
-            morning = mTemp + "℃ - " + mSplit[0] + ' - 강수확률' + mSplit[1].strip()
-            afternoon = aTemp + "℃ - " + aSplit[0] + ' - 강수확률 ' + aSplit[1].strip()
-        else:
-            date = tBodySoup.select("th")[0].get_text()
-            morning = mTemp + "℃ - " + tBodySoup.select(".cell")[0].select(".info")[0].get_text()
-            afternoon = aTemp + "℃ - " + tBodySoup.select(".cell")[1].select(".info")[0].get_text()
-
-        return '(' + date + ', ' + morning + ', ' + afternoon + ')'
+        return '(' + date + '::' + morning + '::' + afternoon + '::' + temperature + ')'
 
     def getWeather(self):
-        req = requests.get("https://weather.naver.com/rgn/townWetr.nhn?naverRgnCd=15230253")
+        req = requests.get("https://weather.naver.com/today/15230109")
         soup = BeautifulSoup(req.content, 'html.parser')
-        respSoup = soup.select("table")
+        respSoup = soup.select(".week_list")
 
         result = []
-        result.append(self.parseWeatherInfo(respSoup[1].select("td")[1]))
-        for child in respSoup[2].select("tr"):
+        for child in respSoup[0].select(".week_item"):
             result.append(self.parseWeatherInfo(child))
 
         return '<br>'.join(result)
 
+class WorldFootBall:
+    def getwFootballNews(self):
+        newsPage = requests.get("https://sports.news.naver.com/wfootball/index.nhn")
+        self.soup = BeautifulSoup(newsPage.content, "html.parser")
+        texts = []
+        for child in self.soup.select(".news_list > li > a"):
+            texts.append(child.get_text())
+        return '<br>'.join(texts)
 
+class Corona:
+    def getTodayData(self):
+        soup = BeautifulSoup(requests.get("http://ncov.mohw.go.kr/").content, "html.parser")
+        texts = []
+        for child in soup.select(".liveNum > .liveNum"):
+            texts.append(re.sub('\d\)', '\g<0><br>', re.sub('\n\+|\?\n|\n','',child.get_text().strip())))
+        return '<br>'.join(texts).replace('=', '')

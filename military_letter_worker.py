@@ -1,9 +1,62 @@
 
 import os.path
 import sys
-import builtins
-import military_letter_sender
+import military_letter_sender as mls
 import functions_area
+import schedule
+import time
+
+class Sender:
+    sender = mls.LetterClient()
+    def login_and_send(self, id, pw, name, autolettermaker):
+        let = autolettermaker.makeLetter()
+        self.sender.login(id, pw)
+        print(let[1])
+        self.sender.send(name, let[0], let[1])
+
+class Scheduler:
+    autolettermaker: object
+    scheduler = schedule
+    sender = Sender()
+    id: str
+    pw: str
+    name: str
+
+    def __init__(self, id, pw, name, autolettermaker):
+        self.autolettermaker = autolettermaker
+        self.id = id
+        self.pw = pw
+        self.name = name
+
+    def setScheduler(self, sendOnWeekends):
+        self.scheduler.every().monday.at("13:00").do(
+            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+        )
+        self.scheduler.every().tuesday.at("13:00").do(
+            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+        )
+        self.scheduler.every().wednesday.at("13:00").do(
+            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+        )
+        self.scheduler.every().thursday.at("13:00").do(
+            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+        )
+        self.scheduler.every().friday.at("13:00").do(
+            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+        )
+        if sendOnWeekends:
+            print("[LOG] : Scheduler will send letter even weekends")
+            self.scheduler.every().saturday.at("17:00").do(
+                self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+            )
+            self.scheduler.every().sunday.at("17:00").do(
+                self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+            )
+
+    def run(self):
+        while True:
+            self.scheduler.run_pending()
+            time.sleep(60)
 
 class UserFileManager:
     username = ""
@@ -46,21 +99,25 @@ class UserFileManager:
         print("[LOG] : " + self.username + "'s File is not exist. You should create user data file with UserDataFileManager class.")
         return -1
 
-class AutoBodyMaker:
+#TODO : Need to implement makeTitle Function!
+class AutoLetterMaker:
     username = ""
     userdata = []
     bodyResult = ""
+    title = "오늘의 소식"
 
     def __init__(self, username):
         self.username = username
 
-    def sendLetter(self, uid, pw, targName, title):
-        lc = military_letter_sender.LetterClient()
-        lc.login(uid, pw)
-        lc.send(targName, title, self.makeBody())
+    def makeLetter(self):
+        return [self.title, self.makeBody()]
+
+    def makeTitle(self):
+        pass
 
     def makeBody(self):
         self.userdata = self.__readFileData()
+        self.bodyResult = ""
         for data in self.userdata:
             #Parse arguments for function call
             if data[0] != "?Text":
