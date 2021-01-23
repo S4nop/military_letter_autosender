@@ -123,14 +123,20 @@ class NaverNews():
         ITSCIENCE   = 5
 
     def getNewsPage(self):
-        newsPage = requests.get("https://news.naver.com/")
+        headers = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Whale/2.8.108.15 Safari/537.36'}
+        newsPage = requests.get("https://news.naver.com", headers=headers)
         self.soup = BeautifulSoup(newsPage.content, "html.parser")
 
     def getNewsTitles(self, newsType):
         texts = []
-        for child in self.soup.select("#ranking_10" + str(newsType.value) + " > ul"):
+        news_part = self.soup.select(".com_list")[newsType.value]
+        texts.append(news_part.select(".com_list > dl > dd > a")[0].get_text())
+        for child in news_part.select(".com_list > div > ul > li > a > strong"):
             texts.append(child.get_text())
-        return ''.join(texts).replace("\n", "<br>")
+
+        print('\\')
+        tmp =  '<br>'.join(texts).replace("\\", "")
+        return tmp
 
     def autoRun(self, newsType):
         self.getNewsPage()
@@ -160,15 +166,15 @@ class GoogleNews:
 class WeatherCrawler:
 
     def parseWeatherInfo(self, tBodySoup):
-        date = tBodySoup.select(".date")[0].get_text()
-        coldest = tBodySoup.select(".blind")[0].get_text() + "℃"
-        hottest = tBodySoup.select(".blind")[1].get_text() + "℃"
-        temperature = tBodySoup.select(".temperature")[0].get_text()
+        date = tBodySoup.select(".date")[0].get_text().replace('\n', '')
+        morning = tBodySoup.select(".weather_inner")[0].get_text().replace('\n', '')
+        afternoon = tBodySoup.select(".weather_inner")[1].get_text().replace('\n', '')
+        temperature = tBodySoup.select(".cell_temperature")[0].get_text().replace('\n', '')
 
-        return '(' + date + '::최저기온-' + coldest + '::최고기온-' + hottest + '::' + temperature + ')'
+        return '(' + date + '::' + morning + '::' + afternoon + '::' + temperature + ')'
 
     def getWeather(self):
-        req = requests.get("https://weather.naver.com/rgn/townWetr.nhn?naverRgnCd=15230253")
+        req = requests.get("https://weather.naver.com/today/15230109")
         soup = BeautifulSoup(req.content, 'html.parser')
         respSoup = soup.select(".week_list")
 
@@ -177,6 +183,7 @@ class WeatherCrawler:
             result.append(self.parseWeatherInfo(child))
 
         return '<br>'.join(result)
+
 class WorldFootBall:
     def getwFootballNews(self):
         newsPage = requests.get("https://sports.news.naver.com/wfootball/index.nhn")
@@ -185,3 +192,11 @@ class WorldFootBall:
         for child in self.soup.select(".news_list > li > a"):
             texts.append(child.get_text())
         return '<br>'.join(texts)
+
+class Corona:
+    def getTodayData(self):
+        soup = BeautifulSoup(requests.get("http://ncov.mohw.go.kr/").content, "html.parser")
+        texts = []
+        for child in soup.select(".liveNum > .liveNum"):
+            texts.append(re.sub('\d\)', '\g<0><br>', re.sub('\n\+|\?\n|\n','',child.get_text().strip())))
+        return '<br>'.join(texts).replace('=', '')

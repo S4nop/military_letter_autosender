@@ -11,6 +11,7 @@ class Sender:
     def login_and_send(self, id, pw, name, autolettermaker):
         let = autolettermaker.makeLetter()
         self.sender.login(id, pw)
+        print(let[1])
         self.sender.send(name, let[0], let[1])
 
 class Scheduler:
@@ -31,7 +32,7 @@ class Scheduler:
         self.scheduler.every().monday.at("13:00").do(
             self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
         )
-        self.scheduler.every().tuesday.at("15:16").do(
+        self.scheduler.every().tuesday.at("13:00").do(
             self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
         )
         self.scheduler.every().wednesday.at("13:00").do(
