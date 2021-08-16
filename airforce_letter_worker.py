@@ -1,56 +1,50 @@
 
 import os.path
 import sys
-import military_letter_sender as mls
+import airforce_letter_sender as als
 import functions_area
 import schedule
 import time
 
 class Sender:
-    sender = mls.LetterClient()
-    def login_and_send(self, id, pw, name, autolettermaker):
+    sender = als.LetterClient()
+    def send(self, seq_val, sodae_val, autolettermaker):
         let = autolettermaker.makeLetter()
-        #self.sender.login(id, pw)
-        print(let[1])
-        #self.sender.send(name, let[0], let[1])
+        self.sender.send(seq_val, sodae_val, '<공군은 인편에 줄바꿈이 없어요 :: 오늘의 소식>', let[1].replace('<br>', '<    >'))
 
 class Scheduler:
     autolettermaker: object
     scheduler = schedule
     sender = Sender()
-    id: str
-    pw: str
-    name: str
 
-    def __init__(self, id, pw, name, autolettermaker):
+    def __init__(self, seq_val, sodae_val, autolettermaker):
         self.autolettermaker = autolettermaker
-        self.id = id
-        self.pw = pw
-        self.name = name
+        self.seq_val = seq_val
+        self.sodae_val = sodae_val
 
     def setScheduler(self, sendOnWeekends):
         self.scheduler.every().monday.at("13:00").do(
-            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+            self.sender.send, self.seq_val, self.sodae_val, self.autolettermaker
         )
         self.scheduler.every().tuesday.at("13:00").do(
-            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+            self.sender.send, self.seq_val, self.sodae_val, self.autolettermaker
         )
         self.scheduler.every().wednesday.at("13:00").do(
-            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+            self.sender.send, self.seq_val, self.sodae_val, self.autolettermaker
         )
         self.scheduler.every().thursday.at("13:00").do(
-            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+            self.sender.send, self.seq_val, self.sodae_val, self.autolettermaker
         )
         self.scheduler.every().friday.at("13:00").do(
-            self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+            self.sender.send, self.seq_val, self.sodae_val, self.autolettermaker
         )
         if sendOnWeekends:
             print("[LOG] : Scheduler will send letter even weekends")
             self.scheduler.every().saturday.at("17:00").do(
-                self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+                self.sender.send, self.seq_val, self.sodae_val, self.autolettermaker
             )
             self.scheduler.every().sunday.at("17:00").do(
-                self.sender.login_and_send, self.id, self.pw, self.name, self.autolettermaker
+                self.sender.send, self.seq_val, self.sodae_val, self.autolettermaker
             )
 
     def run(self):
@@ -123,12 +117,12 @@ class AutoLetterMaker:
             if data[0] != "?Text":
                 self.bodyResult += self.__runFunctions(data)
             else:
-                self.bodyResult += data[1] + "<br>"
+                self.bodyResult += data[1] + "\n"
 
         return self.bodyResult
 
     def appendLine(self, text):
-        self.bodyResult += "<br>" + text
+        self.bodyResult += "\n" + text
 
     def __runFunctions(self, data):
         args = self.__makeArgs(data[2]) if data[2] != "" else ""

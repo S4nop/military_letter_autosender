@@ -130,7 +130,11 @@ class NaverNews():
     def getNewsTitles(self, newsType):
         texts = []
         news_part = self.soup.select(".com_list")[newsType.value]
-        texts.append(news_part.select(".com_list > dl > dd > a")[0].get_text())
+        print(news_part.select(".com_list > dl"))
+        try:
+            texts.append(news_part.select(".com_list > dl > dd > a")[0].get_text())
+        except:
+            pass
         for child in news_part.select(".com_list > div > ul > li > a > strong"):
             texts.append(child.get_text())
 
